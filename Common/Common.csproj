@@ -48,11 +48,5 @@
     <Compile Include="ViewModelGames.cs" />
     <Compile Include="ViewModelUserSettings.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Snake_Yar\Snake_Yar.csproj">
-      <Project>{945cb78a-1235-4a01-a933-4df4ff9a0271}</Project>
-      <Name>Snake_Yar</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

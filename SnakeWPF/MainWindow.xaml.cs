@@ -28,33 +28,30 @@ namespace SnakeWPF
     public partial class MainWindow : Window
     {
         public static MainWindow mainWindow;
-
         public ViewModelUserSettings ViewModelUserSettings = new ViewModelUserSettings();
-
         public ViewModelGames ViewModelGames = null;
-
-        public static IPAddress remoteIPAddress = IPAddress.Parse("127.0.0.1");
-
+        public static IPAddress remoteIPaddress = IPAddress.Parse("127.0.0.1");
         public static int remotePort = 5001;
-
         public Thread tRec;
-
         public UdpClient receivingUdpClient;
-
         public Pages.Home Home = new Pages.Home();
-
         public Pages.Game Game = new Pages.Game();
+
+        private List<ViewModelGames> allSnakes;
+
         public MainWindow()
         {
             InitializeComponent();
             mainWindow = this;
             OpenPage(Home);
         }
+
         public void StartReceiver()
         {
             tRec = new Thread(new ThreadStart(Receiver));
             tRec.Start();
         }
+
         public void OpenPage(Page PageOpen)
         {
             DoubleAnimation startAnimation = new DoubleAnimation();
@@ -72,47 +69,47 @@ namespace SnakeWPF
             };
             frame.BeginAnimation(OpacityProperty, startAnimation);
         }
+
         public void Receiver()
         {
             receivingUdpClient = new UdpClient(int.Parse(ViewModelUserSettings.Port));
-            IPEndPoint RemoteIpEndPoint = null;
-            try
-            {
-                while (true)
-                {
-                    byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
-                    string returnData = Encoding.UTF8.GetString(receiveBytes);
-                    if (ViewModelGames == null)
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            OpenPage(Game);
-                        });
-                    }
-                    ViewModelGames = JsonConvert.DeserializeObject<ViewModelGames>(returnData.ToString());
 
-                    if (ViewModelGames.SnakesPlayers.GameOver)
+            IPEndPoint RemoteIpEndPoint = null;
+
+            while (true)
+            {
+                byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
+                string returnData = Encoding.UTF8.GetString(receiveBytes);
+
+                if (ViewModelGames == null)
+                {
+                    Dispatcher.Invoke(() =>
                     {
-                        Dispatcher.Invoke(() =>
-                        {
-                            OpenPage(new Pages.EndGame());
-                        });
-                    }
-                    else
+                        OpenPage(Game);
+                    });
+                }
+                allSnakes = JsonConvert.DeserializeObject<List<ViewModelGames>>(returnData);
+
+                ViewModelGames = allSnakes[allSnakes.Count - 1];
+
+                if (ViewModelGames.SnakesPlayers.GameOver)
+                {
+                    Dispatcher.Invoke(() =>
                     {
-                        Game.CreateUI();
-                    }
+                        OpenPage(new Pages.EndGame());
+                    });
+                }
+                else
+                {
+                    Game.CreateUI(allSnakes);
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Возникло исключение: " + ex.ToString() + "\n " + ex.Message);
-            }
         }
+
         public static void Send(string datagram)
         {
             UdpClient sender = new UdpClient();
-            IPEndPoint endPoint = new IPEndPoint(remoteIPAddress, remotePort);
+            IPEndPoint endPoint = new IPEndPoint(remoteIPaddress, remotePort);
 
             try
             {
@@ -121,13 +118,14 @@ namespace SnakeWPF
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Возникло исключение: " + ex.ToString() + "\n " + ex.Message);
+                Debug.WriteLine($"Возникло исключение {ex.ToString()}\n {ex.Message}");
             }
             finally
             {
                 sender.Close();
             }
         }
+
         private void EventKeyUp(object sender, KeyEventArgs e)
         {
             if (!string.IsNullOrEmpty(ViewModelUserSettings.IPAddress) &&
@@ -135,22 +133,28 @@ namespace SnakeWPF
                 (ViewModelGames != null && !ViewModelGames.SnakesPlayers.GameOver))
             {
                 if (e.Key == Key.Up)
+                {
                     Send($"Up|{JsonConvert.SerializeObject(ViewModelUserSettings)}");
+                }
                 else if (e.Key == Key.Down)
+                {
                     Send($"Down|{JsonConvert.SerializeObject(ViewModelUserSettings)}");
+                }
                 else if (e.Key == Key.Left)
+                {
                     Send($"Left|{JsonConvert.SerializeObject(ViewModelUserSettings)}");
+                }
                 else if (e.Key == Key.Right)
+                {
                     Send($"Right|{JsonConvert.SerializeObject(ViewModelUserSettings)}");
+                }
             }
         }
+
         private void QuitApplication(object sender, System.ComponentModel.CancelEventArgs e)
         {
             receivingUdpClient.Close();
             tRec.Abort();
         }
-
-
-
     }
 }

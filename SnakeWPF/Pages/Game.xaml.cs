@@ -26,6 +26,7 @@ namespace SnakeWPF.Pages
         {
             InitializeComponent();
         }
+
         public void CreateUI()
         {
             Dispatcher.Invoke(() =>
@@ -47,42 +48,63 @@ namespace SnakeWPF.Pages
                             if (iPoint % 2 == 0)
                             {
                                 if (StepCadr % 2 == 0)
+                                {
                                     SnakePoint.Y -= 1;
+                                }
                                 else
+                                {
                                     SnakePoint.Y += 1;
+                                }
                             }
                             else
                             {
                                 if (StepCadr % 2 == 0)
+                                {
                                     SnakePoint.Y += 1;
+                                }
                                 else
+                                {
                                     SnakePoint.Y -= 1;
+                                }
                             }
                         }
-
                         else if (SnakePoint.Y > NextSnakePoint.Y || SnakePoint.Y < NextSnakePoint.Y)
                         {
                             if (iPoint % 2 == 0)
                             {
                                 if (StepCadr % 2 == 0)
+                                {
                                     SnakePoint.X -= 1;
+                                }
                                 else
+                                {
                                     SnakePoint.X += 1;
+                                }
                             }
                             else
                             {
                                 if (StepCadr % 2 == 0)
+                                {
                                     SnakePoint.X += 1;
+                                }
                                 else
+                                {
                                     SnakePoint.X -= 1;
+                                }
                             }
                         }
                     }
+
                     Brush Color;
+
                     if (iPoint == 0)
+                    {
                         Color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 0, 127, 14));
+                    }
                     else
+                    {
                         Color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 0, 198, 19));
+                    }
 
                     Ellipse ellipse = new Ellipse()
                     {
@@ -90,21 +112,75 @@ namespace SnakeWPF.Pages
                         Height = 20,
                         Margin = new Thickness(SnakePoint.X - 10, SnakePoint.Y - 10, 0, 0),
                         Fill = Color,
-                        Stroke = Brushes.Black
+                        Stroke = Brushes.Black,
                     };
                     canvas.Children.Add(ellipse);
                 }
+
                 ImageBrush myBrush = new ImageBrush();
-                myBrush.ImageSource = new BitmapImage(new Uri($"/Image/Apple.png"));
+                myBrush.ImageSource = new BitmapImage(new Uri($"pack://application:,,,/Image/apple.png"));
 
                 Ellipse points = new Ellipse()
                 {
                     Width = 40,
                     Height = 40,
                     Margin = new Thickness(
-                                    MainWindow.mainWindow.ViewModelGames.Points.X - 20,
-                                    MainWindow.mainWindow.ViewModelGames.Points.Y - 20, 0, 0),
-                    Fill = myBrush
+                        MainWindow.mainWindow.ViewModelGames.Points.X - 20,
+                        MainWindow.mainWindow.ViewModelGames.Points.Y - 20, 0, 0),
+                    Fill = myBrush,
+                };
+                canvas.Children.Add(points);
+            });
+        }
+
+        public void CreateUI(List<ViewModelGames> allSnakes)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (StepCadr == 0) StepCadr = 1;
+                else StepCadr = 0;
+                canvas.Children.Clear();
+
+                foreach (ViewModelGames game in allSnakes)
+                {
+                    foreach (Snakes.Point snakePoint in game.SnakesPlayers.Points)
+                    {
+                        Brush color;
+
+                        // Определите цвет для каждой змеи
+                        if (game.SnakesPlayers.Points.IndexOf(snakePoint) == 0)
+                        {
+                            color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 0, 127, 14)); // Голова змеи
+                        }
+                        else
+                        {
+                            color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 0, 198, 19)); // Тело змеи
+                        }
+
+                        Ellipse ellipse = new Ellipse()
+                        {
+                            Width = 20,
+                            Height = 20,
+                            Margin = new Thickness(snakePoint.X - 10, snakePoint.Y - 10, 0, 0),
+                            Fill = color,
+                            Stroke = Brushes.Black,
+                        };
+                        canvas.Children.Add(ellipse);
+                    }
+                }
+
+                // Отображение других элементов игры, таких как яблоко
+                ImageBrush myBrush = new ImageBrush();
+                myBrush.ImageSource = new BitmapImage(new Uri($"pack://application:,,,/Image/apple.png"));
+
+                Ellipse points = new Ellipse()
+                {
+                    Width = 40,
+                    Height = 40,
+                    Margin = new Thickness(
+                        MainWindow.mainWindow.ViewModelGames.Points.X - 20,
+                        MainWindow.mainWindow.ViewModelGames.Points.Y - 20, 0, 0),
+                    Fill = myBrush,
                 };
                 canvas.Children.Add(points);
             });
@@ -112,4 +188,3 @@ namespace SnakeWPF.Pages
 
     }
 }
-

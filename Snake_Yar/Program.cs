@@ -13,21 +13,16 @@ using System.Threading.Tasks;
 
 namespace Snake_Yar
 {
-    class Program
+    internal class Program
     {
         public static List<Leaders> Leaders = new List<Leaders>();
-
         public static List<ViewModelUserSettings> remoteIPAddress = new List<ViewModelUserSettings>();
-
         public static List<ViewModelGames> viewModelGames = new List<ViewModelGames>();
-
         private static int localPort = 5001;
-
-        public static int MaxSpeed = 15;
+        private static int MaxSpeed = 500;
 
         static void Main(string[] args)
         {
-
             try
             {
                 Thread tRec = new Thread(new ThreadStart(Receiver));
@@ -39,29 +34,31 @@ namespace Snake_Yar
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Возникло иссключение: " + ex.ToString() + "\n " + ex.Message);
+                Console.WriteLine($"Возникло исключение {ex.ToString()}\n {ex.Message}");
             }
         }
+
         private static void Send()
         {
             foreach (ViewModelUserSettings User in remoteIPAddress)
             {
                 UdpClient sender = new UdpClient();
-
                 IPEndPoint endPoint = new IPEndPoint(
                     IPAddress.Parse(User.IPAddress),
-                int.Parse(User.Port));
+                    int.Parse(User.Port));
+
                 try
                 {
-                    byte[] bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(viewModelGames.Find(x => x.IdSnake == User.IdSnake)));
+                    byte[] bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(viewModelGames));
                     sender.Send(bytes, bytes.Length, endPoint);
+
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"Отправил данные пользователю: {User.IPAddress}:{User.Port}");
+                    Console.WriteLine($"Отправил данные пользователю {User.IPAddress}: {User.Port}");
                 }
                 catch (Exception ex)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Возникло исключение: " + ex.ToString() + "\n" + ex.Message);
+                    Console.WriteLine($"Возникло исключение {ex.ToString()}\n {ex.Message}");
                 }
                 finally
                 {
@@ -69,30 +66,33 @@ namespace Snake_Yar
                 }
             }
         }
-        public static void Receiver()
+
+        private static void Receiver()
         {
             UdpClient receivingUdpClient = new UdpClient(localPort);
+
             IPEndPoint RemoteIpEndPoint = null;
 
             try
             {
-                Console.WriteLine("Команды сервера:");
+                Console.WriteLine("Команды сервера");
+
                 while (true)
                 {
-                    byte[] receiveBytes = receivingUdpClient.Receive(
-                        ref RemoteIpEndPoint);
+                    byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
 
                     string returnData = Encoding.UTF8.GetString(receiveBytes);
 
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Получил команду: " + returnData.ToString());
+                    Console.WriteLine($"Получил команду: {returnData.ToString()}");
 
                     if (returnData.ToString().Contains("/start"))
                     {
                         string[] dataMessage = returnData.ToString().Split('|');
                         ViewModelUserSettings viewModelUserSettings = JsonConvert.DeserializeObject<ViewModelUserSettings>(dataMessage[1]);
+
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"Подключился пользователь: {viewModelUserSettings.IPAddress}: {viewModelUserSettings.Port}");
+                        Console.WriteLine($"Подключился пользователь: {viewModelUserSettings.IPAddress}:{viewModelUserSettings.Port}");
                         remoteIPAddress.Add(viewModelUserSettings);
                         viewModelUserSettings.IdSnake = AddSnake();
                         viewModelGames[viewModelUserSettings.IdSnake].IdSnake = viewModelUserSettings.IdSnake;
@@ -102,30 +102,18 @@ namespace Snake_Yar
                         string[] dataMessage = returnData.ToString().Split('|');
                         ViewModelUserSettings viewModelUserSettings = JsonConvert.DeserializeObject<ViewModelUserSettings>(dataMessage[1]);
                         int IdPlayer = -1;
-                        IdPlayer = remoteIPAddress.FindIndex(x => x.IPAddress == viewModelUserSettings.IPAddress
-                                                                   && x.Port == viewModelUserSettings.Port);
+                        IdPlayer = remoteIPAddress.FindIndex(x => x.IPAddress == viewModelUserSettings.IPAddress && x.Port == viewModelUserSettings.Port);
+
                         if (IdPlayer != -1)
                         {
-                            if (dataMessage[0] == "Up" &&
-                                viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Down)
-                            {
+                            if (dataMessage[0] == "Up" && viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Down)
                                 viewModelGames[IdPlayer].SnakesPlayers.direction = Snakes.Direction.Up;
-                            }
-                            else if (dataMessage[0] == "Down" &&
-                                     viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Up)
-                            {
+                            else if (dataMessage[0] == "Down" && viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Up)
                                 viewModelGames[IdPlayer].SnakesPlayers.direction = Snakes.Direction.Down;
-                            }
-                            else if (dataMessage[0] == "Left" &&
-                                     viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Right)
-                            {
+                            else if (dataMessage[0] == "Left" && viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Right)
                                 viewModelGames[IdPlayer].SnakesPlayers.direction = Snakes.Direction.Left;
-                            }
-                            else if (dataMessage[0] == "Right" &&
-                                     viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Left)
-                            {
+                            else if (dataMessage[0] == "Right" && viewModelGames[IdPlayer].SnakesPlayers.direction != Snakes.Direction.Left)
                                 viewModelGames[IdPlayer].SnakesPlayers.direction = Snakes.Direction.Right;
-                            }
                         }
                     }
                 }
@@ -133,37 +121,45 @@ namespace Snake_Yar
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Возникло исключение: " + ex.ToString() + "\n" + ex.Message);
+                Console.WriteLine($"Возникло исключение {ex.ToString()}\n {ex.Message}");
             }
         }
-        public static int AddSnake()
+
+        private static int AddSnake()
         {
             ViewModelGames viewModelGamesPlayer = new ViewModelGames();
+
             viewModelGamesPlayer.SnakesPlayers = new Snakes()
             {
-                Points = new List<Snakes.Point>() {
+                Points = new List<Snakes.Point>
+                {
                     new Snakes.Point() { X = 30, Y = 10 },
                     new Snakes.Point() { X = 20, Y = 10 },
                     new Snakes.Point() { X = 10, Y = 10 },
                 },
-                direction = Snakes.Direction.Start
+                direction = Snakes.Direction.Start,
             };
+
             viewModelGamesPlayer.Points = new Snakes.Point(new Random().Next(10, 783), new Random().Next(10, 410));
             viewModelGames.Add(viewModelGamesPlayer);
+
             return viewModelGames.FindIndex(x => x == viewModelGamesPlayer);
         }
+
         public static void Timer()
         {
             while (true)
             {
-                Thread.Sleep(100);
+                Thread.Sleep(1000);
+
                 List<ViewModelGames> RemoteSnakes = viewModelGames.FindAll(x => x.SnakesPlayers.GameOver);
+
                 if (RemoteSnakes.Count > 0)
                 {
                     foreach (ViewModelGames DeadSnake in RemoteSnakes)
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"Отключил пользователя: {remoteIPAddress.Find(x => x.IdSnake == DeadSnake.IdSnake).IPAddress}" +
+                        Console.WriteLine($"Отключил пользователеля {remoteIPAddress.Find(x => x.IdSnake == DeadSnake.IdSnake).IPAddress}" +
                             $": {remoteIPAddress.Find(x => x.IdSnake == DeadSnake.IdSnake).Port}");
                         remoteIPAddress.RemoveAll(x => x.IdSnake == DeadSnake.IdSnake);
                     }
@@ -173,6 +169,7 @@ namespace Snake_Yar
                 foreach (ViewModelUserSettings User in remoteIPAddress)
                 {
                     Snakes Snake = viewModelGames.Find(x => x.IdSnake == User.IdSnake).SnakesPlayers;
+
                     for (int i = Snake.Points.Count - 1; i >= 0; i--)
                     {
                         if (i != 0)
@@ -182,20 +179,24 @@ namespace Snake_Yar
                         else
                         {
                             int Speed = 10 + (int)Math.Round(Snake.Points.Count / 20f);
+
                             if (Speed > MaxSpeed) Speed = MaxSpeed;
 
                             if (Snake.direction == Snakes.Direction.Right)
                             {
                                 Snake.Points[i] = new Snakes.Point() { X = Snake.Points[i].X + Speed, Y = Snake.Points[i].Y };
                             }
+
                             else if (Snake.direction == Snakes.Direction.Down)
                             {
                                 Snake.Points[i] = new Snakes.Point() { X = Snake.Points[i].X, Y = Snake.Points[i].Y + Speed };
                             }
-                            else if (Snake.direction != Snakes.Direction.Up)
+
+                            else if (Snake.direction == Snakes.Direction.Up)
                             {
                                 Snake.Points[i] = new Snakes.Point() { X = Snake.Points[i].X, Y = Snake.Points[i].Y - Speed };
                             }
+
                             else if (Snake.direction == Snakes.Direction.Left)
                             {
                                 Snake.Points[i] = new Snakes.Point() { X = Snake.Points[i].X - Speed, Y = Snake.Points[i].Y };
@@ -203,11 +204,11 @@ namespace Snake_Yar
                         }
                     }
 
-                    if (Snake.Points[0].X <= 0 || Snake.Points[0].X >= 793)
+                    if (Snake.Points[0].X <= 0 || Snake.Points[0].Y >= 793)
                     {
                         Snake.GameOver = true;
                     }
-                    else if (Snake.Points[0].Y <= 0 || Snake.Points[0].Y >= 420)
+                    else if (Snake.Points[0].X <= 0 || Snake.Points[0].Y >= 420)
                     {
                         Snake.GameOver = true;
                     }
@@ -216,7 +217,7 @@ namespace Snake_Yar
                     {
                         for (int i = 1; i < Snake.Points.Count; i++)
                         {
-                            if (Snake.Points[0].X >= Snake.Points[1].X - 1 && Snake.Points[0].X <= Snake.Points[1].X + 1)
+                            if (Snake.Points[0].X >= Snake.Points[i].X - 1 && Snake.Points[0].X <= Snake.Points[i].X + 1)
                             {
                                 if (Snake.Points[0].Y >= Snake.Points[i].Y - 1 && Snake.Points[0].Y <= Snake.Points[i].Y + 1)
                                 {
@@ -226,6 +227,7 @@ namespace Snake_Yar
                             }
                         }
                     }
+
                     if (Snake.Points[0].X >= viewModelGames.Find(x => x.IdSnake == User.IdSnake).Points.X - 15 &&
                         Snake.Points[0].X <= viewModelGames.Find(x => x.IdSnake == User.IdSnake).Points.X + 15)
                     {
@@ -239,20 +241,21 @@ namespace Snake_Yar
                             Snake.Points.Add(new Snakes.Point()
                             {
                                 X = Snake.Points[Snake.Points.Count - 1].X,
-                                Y = Snake.Points[Snake.Points.Count - 1].Y
+                                Y = Snake.Points[Snake.Points.Count - 1].X,
                             });
-
                             LoadLeaders();
                             Leaders.Add(new Leaders()
                             {
                                 Name = User.Name,
                                 Points = Snake.Points.Count - 3
                             });
+
                             Leaders = Leaders.OrderByDescending(x => x.Points).ThenBy(x => x.Name).ToList();
                             viewModelGames.Find(x => x.IdSnake == User.IdSnake).Top =
                                 Leaders.FindIndex(x => x.Points == Snake.Points.Count - 3 && x.Name == User.Name) + 1;
                         }
                     }
+
                     if (Snake.GameOver)
                     {
                         LoadLeaders();
@@ -264,17 +267,19 @@ namespace Snake_Yar
                         SaveLeaders();
                     }
                 }
+
                 Send();
             }
         }
+
         public static void SaveLeaders()
         {
             string json = JsonConvert.SerializeObject(Leaders);
             StreamWriter SW = new StreamWriter("./leaders.txt");
-
             SW.WriteLine(json);
             SW.Close();
         }
+
         public static void LoadLeaders()
         {
             if (File.Exists("./leaders.txt"))
@@ -293,8 +298,9 @@ namespace Snake_Yar
                 }
             }
             else
+            {
                 Leaders = new List<Leaders>();
+            }
         }
-
     }
 }
